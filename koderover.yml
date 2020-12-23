@@ -1,0 +1,63 @@
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "clone"
+  - "build"
+  - "deploy"
+
+steps:
+  clone:
+    title: "Cloning repository"
+    type: "git-clone"
+    repo: "https://github.com/lilianzhu/cicitest"
+    revision: "${{KR_BRANCH}}"
+    git: "github"
+    stage: "clone"
+  build:
+    stage: "build"
+    title: 构建二进制
+    type: freestyle
+    working_directory: './cicitest/cici-backend'
+    image: 'golang:latest'
+    commands:
+      - pwd
+      - ls -al
+      - cat ../nginx.yaml
+      - go clean && GOOS=linux GOARCH=amd64 go build -o cici  -ldflags="-X main.BuildStamp=`date +%Y-%m-%d.%H:%M:%S`" cici-backend.go
+  Docker-Build:
+    stage: build
+    title: 构建镜像
+    type: build
+    working_directory: './cicitest/cici-backend'
+    # registry: dist
+    image_name: 'cici-backend'
+    tag: '${{KR_BUILD_TIMESTAMP}}'
+    dockerfile: Dockerfile
+  Deploy:
+    cluster: local
+    kind: kubernetes
+    namespace: liliantest
+    service: cici-backend
+    title: deploying to cluster
+    type: deploy
+    candidate: 
+      #image: "cici-backend:${{KR_BUILD_TIMESTAMP}}"
+      image: '${{Docker-Build}}'
+      registry: 'trial'
+  deploy:
+    stage: deploy
+    type: helm
+    arguments:
+      action: install
+      namespace: liliantest
+      chart_name: cicichart
+      chart_repo_url: https://reg.8slan.com/chartrepo/koderover-preview
+      release_name: first
+      helm_version: 3.1.1
+      kube_context: local
+      custom_values:
+        - 'ciciBackend.image.tag="${{KR_BUILD_TIMESTAMP}}"'
+        - 'ciciBackend.image.repository="ccr.ccs.tencentyun.com/trial/cici-backend"'
+
+
+

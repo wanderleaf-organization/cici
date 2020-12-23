@@ -1,0 +1,23 @@
+version: '1.0'
+stages:
+  - 代码克隆
+  # hah1234566
+steps:
+    git_clone:
+        stage: 代码克隆
+        repo: 'https://github.com/lilianzhu/cici'
+        revision: master
+        title: git clone
+        type: git-clone
+        git: "github"
+        working_directory: '${{KR_VOLUME_PATH}}'
+    BuildBackend:
+        title: "构建backend镜像"
+        stage: 代码克隆
+        type: build
+        build_arguments:
+          - cpuset-cpus=1
+        image_name: spock-backend
+        tag: '${{KR_BUILD_TIMESTAMP}}'
+        working_directory: '${{KR_VOLUME_PATH}}/koderover'
+        dockerfile: ./ci/spock-backend.Dockerfile
