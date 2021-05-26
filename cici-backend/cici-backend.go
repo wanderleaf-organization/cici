@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// test1123777488sjdjjs
+// test1123777488sjd
 var BuildStamp = "No Build Stamp Provided"
 
 func hello(w http.ResponseWriter, req *http.Request) {
